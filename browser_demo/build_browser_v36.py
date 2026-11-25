@@ -6,7 +6,7 @@
 What changes for the browser: the virtual site / built-in main server / kit link run in JavaScript (ported from
 the Python app, checked job-for-job by src/parity_test.js), records go to this browser's IndexedDB, and the
 AI-only buttons are hidden. The physics, estimators and results are unchanged.
-Opening the page shows the 3D stacking sim first (#calc = alignment screen, #yard = 3D AI yard).
+Opening the page shows the 3D AI yard first (#calc = alignment screen, #stack = 3D stacking sim).
 usage: python build_browser_v36.py
 """
 import pathlib
@@ -64,17 +64,17 @@ START_VIEW = r"""
 #mkBackTo3d{position:fixed;right:12px;bottom:12px;z-index:9998;border:0;border-radius:10px;padding:10px 14px;background:#2f7df6;color:#fff;font-weight:700;cursor:pointer}
 </style>
 <div id="mkView" hidden><div id="mkViewBar"><b>MAS-kit 시뮬레이터</b>
-<button data-v="stack">3D 적재 시뮬</button><button data-v="yard">3D AI 야드</button><button data-v="calc">정렬 계산 화면</button></div>
+<button data-v="yard">3D AI 야드</button><button data-v="stack">3D 적재 시뮬</button><button data-v="calc">정렬 계산 화면</button></div>
 <iframe id="mkViewFrame" title="MAS-kit 3D 시뮬레이션" allow="fullscreen"></iframe></div>
-<button id="mkBackTo3d" hidden>3D 적재 시뮬로 돌아가기</button>
+<button id="mkBackTo3d" hidden>3D AI 야드로 돌아가기</button>
 <script>
-/* QR로 열면 3D 적재 시뮬을 먼저 띄운다. 주소 끝 #calc = 정렬 계산 화면, #yard = 3D AI 야드. */
+/* QR로 열면 3D AI 야드를 먼저 띄운다. 주소 끝 #calc = 정렬 계산 화면, #stack = 3D 적재 시뮬. */
 (function(){
  var PAGES={stack:'MAS-kit_3D_%EC%BB%A8%ED%85%8C%EC%9D%B4%EB%84%88%EC%98%AE%EA%B8%B0%EA%B8%B0.html',
             yard:'MAS-kit_3D_AI%EC%95%BC%EB%93%9C_%EB%B8%8C%EB%9D%BC%EC%9A%B0%EC%A0%80.html'};
  var box=document.getElementById('mkView'),fr=document.getElementById('mkViewFrame'),back=document.getElementById('mkBackTo3d');
  function show(v){
-  if(!PAGES[v]&&v!=='calc')v='stack';
+  if(!PAGES[v]&&v!=='calc')v='yard';
   [].forEach.call(box.querySelectorAll('button'),function(b){b.className=b.getAttribute('data-v')===v?'on':'';});
   if(v==='calc'){box.hidden=true;back.hidden=false;fr.removeAttribute('src');document.body.style.overflow='';return;}
   back.hidden=true;box.hidden=false;document.body.style.overflow='hidden';
@@ -82,7 +82,7 @@ START_VIEW = r"""
  }
  function fromHash(){show((location.hash||'').replace('#',''));}
  box.addEventListener('click',function(e){var v=e.target.getAttribute&&e.target.getAttribute('data-v');if(v)location.hash=v;});
- back.addEventListener('click',function(){location.hash='stack';});
+ back.addEventListener('click',function(){location.hash='yard';});
  window.addEventListener('hashchange',fromHash);fromHash();
 })();
 </script>

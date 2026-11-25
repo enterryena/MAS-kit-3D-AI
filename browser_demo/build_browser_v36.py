@@ -6,6 +6,7 @@
 What changes for the browser: the virtual site / built-in main server / kit link run in JavaScript (ported from
 the Python app, checked job-for-job by src/parity_test.js), records go to this browser's IndexedDB, and the
 AI-only buttons are hidden. The physics, estimators and results are unchanged.
+Opening the page shows the 3D stacking sim first (#calc = alignment screen, #yard = 3D AI yard).
 usage: python build_browser_v36.py
 """
 import pathlib
@@ -51,6 +52,43 @@ REPLACE_BLOCKS = [
 ]
 
 
+START_VIEW = r"""
+<style>
+#mkView{position:fixed;inset:0;z-index:9999;background:#0d1a24;display:flex;flex-direction:column}
+#mkView[hidden]{display:none}
+#mkViewBar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:6px 8px;background:#0d1a24;color:#e9f1f6;font:600 13px "Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif}
+#mkViewBar b{margin-right:auto;font-size:13px}
+#mkViewBar button{border:0;border-radius:8px;padding:7px 10px;font:inherit;cursor:pointer;background:#24384a;color:#e9f1f6}
+#mkViewBar button.on{background:#2f7df6;color:#fff}
+#mkViewFrame{flex:1;width:100%;border:0;background:#b7c9d5}
+#mkBackTo3d{position:fixed;right:12px;bottom:12px;z-index:9998;border:0;border-radius:10px;padding:10px 14px;background:#2f7df6;color:#fff;font-weight:700;cursor:pointer}
+</style>
+<div id="mkView" hidden><div id="mkViewBar"><b>MAS-kit 시뮬레이터</b>
+<button data-v="stack">3D 적재 시뮬</button><button data-v="yard">3D AI 야드</button><button data-v="calc">정렬 계산 화면</button></div>
+<iframe id="mkViewFrame" title="MAS-kit 3D 시뮬레이션" allow="fullscreen"></iframe></div>
+<button id="mkBackTo3d" hidden>3D 적재 시뮬로 돌아가기</button>
+<script>
+/* QR로 열면 3D 적재 시뮬을 먼저 띄운다. 주소 끝 #calc = 정렬 계산 화면, #yard = 3D AI 야드. */
+(function(){
+ var PAGES={stack:'MAS-kit_3D_%EC%BB%A8%ED%85%8C%EC%9D%B4%EB%84%88%EC%98%AE%EA%B8%B0%EA%B8%B0.html',
+            yard:'MAS-kit_3D_AI%EC%95%BC%EB%93%9C_%EB%B8%8C%EB%9D%BC%EC%9A%B0%EC%A0%80.html'};
+ var box=document.getElementById('mkView'),fr=document.getElementById('mkViewFrame'),back=document.getElementById('mkBackTo3d');
+ function show(v){
+  if(!PAGES[v]&&v!=='calc')v='stack';
+  [].forEach.call(box.querySelectorAll('button'),function(b){b.className=b.getAttribute('data-v')===v?'on':'';});
+  if(v==='calc'){box.hidden=true;back.hidden=false;fr.removeAttribute('src');document.body.style.overflow='';return;}
+  back.hidden=true;box.hidden=false;document.body.style.overflow='hidden';
+  var url=new URL(PAGES[v],location.href).href;if(fr.getAttribute('src')!==url)fr.setAttribute('src',url);
+ }
+ function fromHash(){show((location.hash||'').replace('#',''));}
+ box.addEventListener('click',function(e){var v=e.target.getAttribute&&e.target.getAttribute('data-v');if(v)location.hash=v;});
+ back.addEventListener('click',function(){location.hash='stack';});
+ window.addEventListener('hashchange',fromHash);fromHash();
+})();
+</script>
+"""
+
+
 def build():
     html = SRC.read_text(encoding='utf-8')
     for old, new in PAIRS + REPLACE_BLOCKS + [(r, '') for r in REMOVE]:
@@ -74,6 +112,10 @@ def build():
         raise SystemExit('desktop-only block not found')
     site = SITE_JS.read_text(encoding='utf-8')
     html = html[:i] + '<script>\n' + site + '\n' + GLUE + '</script>' + html[j + len('</script>'):]
+    k = html.rfind('</body>')
+    if k < 0:
+        raise SystemExit('</body> not found')
+    html = html[:k] + START_VIEW + html[k:]
     OUT.write_text(html, encoding='utf-8')
     print('wrote', OUT.name, len(html), 'bytes')
 
